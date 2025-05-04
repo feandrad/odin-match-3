@@ -1,0 +1,16 @@
+/.idea/
+/bin/
+*.iml
+# Odin specific
+ols.json
+bin/
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-*
+*.swp
+
+# OS specific
+.DS_Store
+Thumbs.db
