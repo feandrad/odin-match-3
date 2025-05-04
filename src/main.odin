@@ -79,6 +79,7 @@ main :: proc() {
     rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE_C)
     defer rl.CloseWindow()
     
+    rl.SetExitKey(rl.KeyboardKey(0))
     rl.SetTargetFPS(60)
     
     current_state := GameState.MainMenu
@@ -96,7 +97,7 @@ main :: proc() {
             }
         } else {
             // Check for return to menu from other screens
-            if rl.IsKeyPressed(rl.KeyboardKey.ESCAPE) {
+            if rl.IsKeyPressed(.ESCAPE) {
                 current_state = .MainMenu
             }
             STATE_TABLE[current_state].update()
