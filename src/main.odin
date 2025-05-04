@@ -1,5 +1,6 @@
 package main
 
+import gp "play"
 import rl "vendor:raylib"
 
 // Game states
@@ -90,17 +91,21 @@ main :: proc() {
             result := STATE_TABLE[current_state].update()
             if result != .None {
                 #partial switch result {
-                    case .StartGame: current_state = .Game
+                    case .StartGame: 
+                        current_state = .Game
+                        gp.Init() // Initialize gameplay when entering game state
                     case .Options: current_state = .Options
                     case .Exit: return // Exit game
                 }
             }
         } else {
-            // Check for return to menu from other screens
-            if rl.IsKeyPressed(.ESCAPE) {
+            // For other states, call their update function and check the result
+            result := STATE_TABLE[current_state].update()
+            
+            // For Game and Options states, None means return to menu
+            if result == .None && (current_state == .Game || current_state == .Options) {
                 current_state = .MainMenu
             }
-            STATE_TABLE[current_state].update()
         }
         
         // Render current state
@@ -188,14 +193,16 @@ draw_main_menu :: proc() {
 }
 
 update_game :: proc() -> MenuOption {
-    // Game update logic would go here
-    return .None
+    // Call gameplay update function, which returns true if ESC was pressed
+    if gp.Update() {
+        return .None // Return to main menu
+    }
+    return .StartGame // Continue game
 }
 
 draw_game :: proc() {
-    // Game drawing logic
-    draw_centered_text(GAME_SCREEN_C, SCREEN_HEIGHT/2 - 20, 40, COLOR_TEXT)
-    draw_centered_text(HELP_ESC_C, SCREEN_HEIGHT - 40, 20, COLOR_TEXT_HELP)
+    // Call gameplay draw function to render the board
+    gp.Draw()
 }
 
 update_options :: proc() -> MenuOption {

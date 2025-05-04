@@ -1,0 +1,10 @@
+[general]
+play = "Jogar"
+settings = "Configurações"
+credits = "Créditos"
+language = "Idioma"
+
+[menu]
+title = "Alinha 3"
+start = "Começar Jogo"
+exit = "Sair"

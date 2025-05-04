@@ -1,0 +1,10 @@
+[general]
+play = "Play"
+settings = "Settings"
+credits = "Credits"
+language = "Language"
+
+[menu]
+title = "Match 3 Madness"
+start = "Start Game"
+exit = "Exit"
