@@ -36,7 +36,7 @@ Draw :: proc() {
     rl.ClearBackground(rl.DARKBLUE)
 //    c.draw_centered_text(GAME_TITLE, 30, 30, c.COLOR_TEXT)
 
-    draw_board(game.board)
+    draw_board(game.board, game.drag_state)
     draw_hover(game.board, game.drag_state)
     draw_drag(game.board, game.drag_state)
 
