@@ -1,6 +1,5 @@
-package gameplay
+package play
 
-import c "../common"
 import rl "vendor:raylib"
 
 GAME_TITLE :: cstring("MATCH‑3 GAME")
@@ -35,9 +34,12 @@ Update :: proc() -> bool {
 
 Draw :: proc() {
     rl.ClearBackground(rl.DARKBLUE)
-    c.draw_centered_text(GAME_TITLE, 30, 30, c.COLOR_TEXT)
+//    c.draw_centered_text(GAME_TITLE, 30, 30, c.COLOR_TEXT)
+
     draw_board(game.board)
+    draw_hover(game.board, game.drag_state)
     draw_drag(game.board, game.drag_state)
-    c.draw_centered_text(INSTRUCTIONS_C, c.SCREEN_HEIGHT - 80, 20, c.COLOR_TEXT)
-    c.draw_centered_text(c.HELP_ESC_C, c.SCREEN_HEIGHT - 40, 20, c.COLOR_TEXT_HELP)
+
+//    c.draw_centered_text(INSTRUCTIONS_C, c.SCREEN_HEIGHT - 80, 20, c.COLOR_TEXT)
+//    c.draw_centered_text(c.HELP_ESC_C, c.SCREEN_HEIGHT - 40, 20, c.COLOR_TEXT_HELP)
 }

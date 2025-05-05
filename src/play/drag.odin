@@ -1,80 +1,89 @@
-package gameplay
+package play
 
 import rl "vendor:raylib"
 
-// Drag state to track gem dragging
 DragState :: struct {
-    is_dragging:       bool,
-    start_position:    GridPosition,
-    current_position:  GridPosition,
-    initial_mouse_pos: rl.Vector2,
+    dragging   : bool,
+    start_grid : GridPosition,
+    start_world: rl.Vector2,
+    offset     : rl.Vector2,
 }
 
-// Create a new drag state
 init_drag_state :: proc() -> DragState {
-    return DragState{
-        is_dragging = false,
-    }
+    return DragState{ }
 }
 
-// Handle dragging interaction on the board
-update_drag :: proc(
-    board: ^Board, 
-    drag_state: ^DragState, 
-    on_swap: proc(a, b: GridPosition)
-) {
-    mouse_pos := rl.GetMousePosition()
-    
-    // Start dragging
-    if !drag_state.is_dragging && rl.IsMouseButtonPressed(.LEFT) {
-        if grid_pos, is_valid := world_to_grid(board^, mouse_pos); is_valid {
-            drag_state.is_dragging = true
-            drag_state.start_position = grid_pos
-            drag_state.current_position = grid_pos
-            drag_state.initial_mouse_pos = mouse_pos
+clamp :: proc(v, lo, hi: f32) -> f32 {
+    if v < lo {
+        return lo
+    }
+    if v > hi {
+        return hi
+    }
+    return v
+}
+
+
+
+update_drag :: proc(b: ^Board, s: ^DragState, on_swap: proc(a, b: GridPosition)) {
+    m := rl.GetMousePosition()
+
+    if !s.dragging && rl.IsMouseButtonPressed(.LEFT) {
+        if gp, ok := world_to_grid(b^, m); ok {
+            s.dragging = true
+            s.start_grid = gp
+            s.start_world = grid_to_world(b^, gp)
+            s.offset = rl.Vector2{ }
         }
     }
-    
-    // Handle dragging
-    if drag_state.is_dragging {
-        if grid_pos, is_valid := world_to_grid(board^, mouse_pos); is_valid {
-            // Only process when moving to a new adjacent cell
-            if grid_pos.x != drag_state.current_position.x || 
-               grid_pos.y != drag_state.current_position.y {
-                
-                if are_adjacent(drag_state.current_position, grid_pos) {
-                    // Swap gems
-                    swap_gems(board, drag_state.current_position, grid_pos)
-                    
-                    // Call the swap callback
-                    if on_swap != nil {
-                        on_swap(drag_state.current_position, grid_pos)
-                    }
-                    
-                    // Update current position
-                    drag_state.current_position = grid_pos
-                }
+
+    if s.dragging {
+        dx := m.x - s.start_world.x
+        dy := m.y - s.start_world.y
+        dist := rl.Vector2Length(rl.Vector2{ dx, dy })
+
+        if dist < CELL_SIZE * 0.5 {
+            s.offset = rl.Vector2{ dx, dy }
+        } else {
+            max_drag := CELL_SIZE
+            if abs(dx) > abs(dy) {
+            // lock X
+                s.offset.x = clamp(dx, -max_drag, max_drag)
+                s.offset.y = 0
+            } else {
+            // lock Y
+                s.offset.y = clamp(dy, -max_drag, max_drag)
+                s.offset.x = 0
             }
         }
-        
-        // End dragging
+
         if rl.IsMouseButtonReleased(.LEFT) {
-            drag_state.is_dragging = false
+            end_world := s.start_world + s.offset
+            if end_gp, ok := world_to_grid(b^, end_world); ok &&
+            are_adjacent(s.start_grid, end_gp) && s.start_grid != end_gp {
+                swap_gems(b, s.start_grid, end_gp)
+                if on_swap != nil {
+                    on_swap(s.start_grid, end_gp)
+                }
+            }
+            s^ = DragState{ } // reset
         }
     }
 }
 
-// Draw helper for dragging visualization
-draw_drag :: proc(board: Board, drag_state: DragState) {
-    if drag_state.is_dragging {
-        // Highlight the selected gem
-        pos := grid_to_world(board, drag_state.current_position)
-        rl.DrawRectangleLines(
-            i32(pos.x), 
-            i32(pos.y), 
-            i32(CELL_SIZE), 
-            i32(CELL_SIZE), 
-            rl.WHITE
-        )
+draw_drag :: proc(b: Board, s: DragState) {
+    if !s.dragging {
+        return
+    }
+    pos := s.start_world + s.offset
+    rl.DrawRectangleLines(i32(pos.x), i32(pos.y), i32(CELL_SIZE), i32(CELL_SIZE), rl.WHITE)
+}
+
+LIGHT_BLUE_GRAY :: rl.Color{0xB0, 0xC4, 0xDE, 0xFF}
+
+draw_hover :: proc(b: Board, s: DragState) {
+    if gp, ok := world_to_grid(b, rl.GetMousePosition()); ok {
+        pos := grid_to_world(b, gp)
+        rl.DrawRectangleLines(i32(pos.x), i32(pos.y), i32(CELL_SIZE), i32(CELL_SIZE), LIGHT_BLUE_GRAY)
     }
 }

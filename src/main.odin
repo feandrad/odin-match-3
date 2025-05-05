@@ -3,14 +3,12 @@ package main
 import gp "play"
 import rl "vendor:raylib"
 
-// Game states
 GameState :: enum {
     MainMenu,
     Game,
     Options,
 }
 
-// Menu options
 MenuOption :: enum {
     None = -1,
     StartGame,
@@ -18,11 +16,9 @@ MenuOption :: enum {
     Exit,
 }
 
-// Screen dimensions
 SCREEN_WIDTH :: 800
 SCREEN_HEIGHT :: 600
 
-// Theme colors
 COLOR_BG :: rl.DARKGRAY
 COLOR_BUTTON :: rl.DARKGRAY
 COLOR_BUTTON_HOVER :: rl.GRAY
@@ -32,7 +28,6 @@ COLOR_TEXT :: rl.RAYWHITE
 COLOR_TEXT_SELECTED :: rl.YELLOW
 COLOR_TEXT_HELP :: rl.LIGHTGRAY
 
-// Pre-converted cstring constants for static texts
 TITLE_C :: cstring("Game Menu in Odin + Raylib")
 MAIN_MENU_C :: cstring("MAIN MENU")
 GAME_SCREEN_C :: cstring("GAME SCREEN")
@@ -40,37 +35,31 @@ OPTIONS_SCREEN_C :: cstring("OPTIONS SCREEN")
 HELP_NAV_C :: cstring("Use UP/DOWN arrows to navigate, ENTER to select")
 HELP_ESC_C :: cstring("Press ESC to return to main menu")
 
-// Menu item structure with cstring
 MenuItem :: struct {
     text: cstring,
     rect: rl.Rectangle,
     is_hovered: bool,
 }
 
-// Global menu items with pre-converted cstrings
 MAIN_MENU_ITEMS := [3]MenuItem{
     {text = cstring("Start Game")},
     {text = cstring("Options")},
     {text = cstring("Exit")},
 }
 
-// State callbacks structure for cleaner state management
 StateCallbacks :: struct {
     update: proc() -> MenuOption,
     draw: proc(),
 }
 
-// State management table
 STATE_TABLE := [GameState]StateCallbacks{
     GameState.MainMenu = {update = update_main_menu, draw = draw_main_menu},
     GameState.Game     = {update = update_game,     draw = draw_game},
     GameState.Options  = {update = update_options,  draw = draw_options},
 }
 
-// Track the currently selected menu item
 selected_item: MenuOption = .StartGame
 
-// Helper function to draw centered text
 draw_centered_text :: proc(text: cstring, y: i32, size: i32, color: rl.Color) {
     text_width := rl.MeasureText(text, size)
     rl.DrawText(text, SCREEN_WIDTH/2 - text_width/2, y, size, color)

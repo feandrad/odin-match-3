@@ -1,4 +1,4 @@
-package gameplay
+package play
 
 import c "../common"
 import rl "vendor:raylib"
