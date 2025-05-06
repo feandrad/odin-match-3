@@ -62,11 +62,12 @@ end_drag :: proc(b: ^Board, s: ^DragState, on_swap: proc(a, b: GridPosition)) {
         return
     }
     end_world := s.start_world + s.offset
-    if gp, ok := world_to_grid(b^, end_world); ok &&
-    are_adjacent(s.start_grid, gp) && s.start_grid != gp {
-        swap_slots(b, s.start_grid, gp)
-        if on_swap != nil {
-            on_swap(s.start_grid, gp)
+    if gp, ok := world_to_grid(b^, end_world); ok {
+        if is_valid(gp) && are_adjacent(s.start_grid, gp) && s.start_grid != gp {
+            swap_slots(b, s.start_grid, gp)
+            if on_swap != nil {
+                on_swap(s.start_grid, gp)
+            }
         }
     }
     s^ = DragState{ }

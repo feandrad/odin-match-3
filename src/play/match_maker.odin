@@ -76,41 +76,48 @@ find_matches_around :: proc(b: ^Board, pos: GridPosition) -> [dynamic]Match {
         }
     }
 
-    // 2×2 squares
-    for dy in -1..=0 {
-        for dx in -1..=0 {
-            sx := pos.x + dx
-            sy := pos.y + dy
-            if sx >= 0 && sy >= 0 && sx+1 < GRID_WIDTH && sy+1 < GRID_HEIGHT {
-                sq := [4]GridPosition{
-                    {sx, sy}, {sx+1, sy},
-                    {sx, sy+1}, {sx+1, sy+1},
-                }
-                if all_equal(b^, sq[:], centre) {
-                    push_pat(&out, .Square2x2, sq[:])
-                }
-            }
-        }
-    }
-
-    // 3×3 squares
-    for dy in -2..=0 {
-        for dx in -2..=0 {
-            sx := pos.x + dx
-            sy := pos.y + dy
-            if sx >= 0 && sy >= 0 && sx+2 < GRID_WIDTH && sy+2 < GRID_HEIGHT {
-                sq : [dynamic]GridPosition
-                for oy in 0..<3 {
-                    for ox in 0..<3 {
-                        push_pos(&sq, GridPosition{sx+ox, sy+oy})
-                    }
-                }
-                if all_equal(b^, sq[:], centre) {
-                    push_pat(&out, .Square3x3, sq[:])
-                }
-            }
-        }
-    }
+//    // 2×2 squares
+//    for dy in -1..=0 {
+//        for dx in -1..=0 {
+//            sx := pos.x + dx
+//            sy := pos.y + dy
+//            if sx >= 0 && sy >= 0 && sx+1 < GRID_WIDTH && sy+1 < GRID_HEIGHT {
+//                sq := [4]GridPosition{
+//                    {sx, sy}, {sx+1, sy},
+//                    {sx, sy+1}, {sx+1, sy+1},
+//                }
+//                if all_equal(b^, sq[:], centre) {
+//                    push_pat(&out, .Square2x2, sq[:])
+//                }
+//            }
+//        }
+//    }
+//
+//    // 3×3 squares
+//    for dy in -2..=0 {
+//        for dx in -2..=0 {
+//            sx := pos.x + dx
+//            sy := pos.y + dy
+//            if sx >= 0 && sy >= 0 && sx+2 < GRID_WIDTH && sy+2 < GRID_HEIGHT {
+//                sq : [dynamic]GridPosition
+//                valid_square := true
+//                for oy in 0..<3 {
+//                    for ox in 0..<3 {
+//                        p := GridPosition{sx+ox, sy+oy}
+//                        if !is_valid(p) {
+//                            valid_square = false
+//                            break
+//                        }
+//                        push_pos(&sq, p)
+//                    }
+//                    if !valid_square { break }
+//                }
+//                if valid_square && all_equal(b^, sq[:], centre) {
+//                    push_pat(&out, .Square3x3, sq[:])
+//                }
+//            }
+//        }
+//    }
 
     return out
 }
@@ -120,26 +127,42 @@ on_match :: proc(b: ^Board, positions: []GridPosition) {
     queue     := make([dynamic]GridPosition, 0)
     matches   : [dynamic]Match
 
+    rl.TraceLog(.DEBUG, "on_match: starting with %d positions", len(positions))
     for p in positions {
-        _ = append(&queue, p)
+        if is_valid(p) {
+            rl.TraceLog(.DEBUG, "on_match: adding valid position (%d, %d) to queue", p.x, p.y)
+            _ = append(&queue, p)
+        } else {
+            rl.TraceLog(.ERROR, "on_match: skipping invalid position (%d, %d)", p.x, p.y)
+        }
     }
 
     for i in 0..<len(queue) {
         pos := queue[i]
-        if processed[pos] { continue }
+        if processed[pos] || !is_valid(pos) { 
+            if !is_valid(pos) {
+                rl.TraceLog(.ERROR, "on_match: skipping invalid position in queue (%d, %d)", pos.x, pos.y)
+            }
+            continue 
+        }
         processed[pos] = true
+        rl.TraceLog(.DEBUG, "on_match: processing position (%d, %d)", pos.x, pos.y)
 
         local := find_matches_around(b, pos)
         for m in local {
             append(&matches, m)
             for p in m.cells {
-                if !processed[p] {
+                if !processed[p] && is_valid(p) {
+                    rl.TraceLog(.DEBUG, "on_match: adding match cell (%d, %d) to queue", p.x, p.y)
                     _ = append(&queue, p)
+                } else if !is_valid(p) {
+                    rl.TraceLog(.ERROR, "on_match: skipping invalid match cell (%d, %d)", p.x, p.y)
                 }
             }
         }
     }
 
+    rl.TraceLog(.DEBUG, "on_match: found %d matches", len(matches))
     apply_matches(b, matches[:])
 }
 
