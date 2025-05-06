@@ -1,52 +1,54 @@
 package play
 
+import b "../board"
+import i "../input"
 import "core:slice"
 import rl "vendor:raylib"
 
-all_equal :: proc(b: Board, ps: []GridPosition, v: GemType) -> bool {
+all_equal :: proc(board: b.Board, ps: []i.GridPosition, v: b.GemType) -> bool {
     for p in ps {
-        if b.slots[p.y][p.x] != v { return false }
+        if board.slots[p.y][p.x] != v { return false }
     }
     return true
 }
 
-push_pos :: proc(a: ^[dynamic]GridPosition, p: GridPosition) {
+push_pos :: proc(a: ^[dynamic]i.GridPosition, p: i.GridPosition) {
     _, _ = append(a, p)
 }
 
-push_pat :: proc(a: ^[dynamic]Match, k: MatchPattern, c: []GridPosition) {
-    _, _ = append(a, Match{k, c})
+push_pat :: proc(a: ^[dynamic]b.Match, k: b.MatchPattern, c: []i.GridPosition) {
+    _, _ = append(a, b.Match{k, c})
 }
 
-find_matches_around :: proc(b: ^Board, pos: GridPosition) -> [dynamic]Match {
-    if pos.x < 0 || pos.x >= GRID_WIDTH || pos.y < 0 || pos.y >= GRID_HEIGHT {
+find_matches_around :: proc(board: ^b.Board, pos: i.GridPosition) -> [dynamic]b.Match {
+    if pos.x < 0 || pos.x >= b.GRID_WIDTH || pos.y < 0 || pos.y >= b.GRID_HEIGHT {
         rl.TraceLog(
             .ERROR,
             "find_matches_around: invalid pos = (%d, %d), GRID_WIDTH = %d, GRID_HEIGHT = %d",
-            pos.x, pos.y, GRID_WIDTH, GRID_HEIGHT
+            pos.x, pos.y, b.GRID_WIDTH, b.GRID_HEIGHT
         )
-        return [dynamic]Match{}
+        return [dynamic]b.Match{}
     }
 
-    out : [dynamic]Match
-    centre := b.slots[pos.y][pos.x]
+    out : [dynamic]b.Match
+    centre := board.slots[pos.y][pos.x]
     if centre == .None { return out }
 
     // horizontal run
-    horiz : [dynamic]GridPosition
+    horiz : [dynamic]i.GridPosition
     push_pos(&horiz, pos)
     for x := pos.x-1; x >= 0; x -= 1 {
-        if b.slots[pos.y][x] == centre {
-            push_pos(&horiz, GridPosition{x, pos.y})
+        if board.slots[pos.y][x] == centre {
+            push_pos(&horiz, i.GridPosition{x, pos.y})
         } else { break }
     }
-    for x in pos.x+1..<GRID_WIDTH {
-        if b.slots[pos.y][x] == centre {
-            push_pos(&horiz, GridPosition{x, pos.y})
+    for x in pos.x+1..<b.GRID_WIDTH {
+        if board.slots[pos.y][x] == centre {
+            push_pos(&horiz, i.GridPosition{x, pos.y})
         } else { break }
     }
     if len(horiz) >= 3 {
-        slice.sort_by(horiz[:], proc(a, b: GridPosition) -> bool { return a.x < b.x })
+        slice.sort_by(horiz[:], proc(a, b: i.GridPosition) -> bool { return a.x < b.x })
         switch len(horiz) {
         case 3: push_pat(&out, .Horizontal3, horiz[:])
         case 4: push_pat(&out, .Horizontal4, horiz[:])
@@ -55,20 +57,20 @@ find_matches_around :: proc(b: ^Board, pos: GridPosition) -> [dynamic]Match {
     }
 
     // vertical run
-    vert : [dynamic]GridPosition
+    vert : [dynamic]i.GridPosition
     push_pos(&vert, pos)
     for y := pos.y-1; y >= 0; y -= 1 {
-        if b.slots[y][pos.x] == centre {
-            push_pos(&vert, GridPosition{pos.x, y})
+        if board.slots[y][pos.x] == centre {
+            push_pos(&vert, i.GridPosition{pos.x, y})
         } else { break }
     }
-    for y in pos.y+1..<GRID_HEIGHT {
-        if b.slots[y][pos.x] == centre {
-            push_pos(&vert, GridPosition{pos.x, y})
+    for y in pos.y+1..<b.GRID_HEIGHT {
+        if board.slots[y][pos.x] == centre {
+            push_pos(&vert, i.GridPosition{pos.x, y})
         } else { break }
     }
     if len(vert) >= 3 {
-        slice.sort_by(vert[:], proc(a, b: GridPosition) -> bool { return a.y < b.y })
+        slice.sort_by(vert[:], proc(a, b: i.GridPosition) -> bool { return a.y < b.y })
         switch len(vert) {
         case 3: push_pat(&out, .Vertical3, vert[:])
         case 4: push_pat(&out, .Vertical4, vert[:])
@@ -122,14 +124,14 @@ find_matches_around :: proc(b: ^Board, pos: GridPosition) -> [dynamic]Match {
     return out
 }
 
-on_match :: proc(b: ^Board, positions: []GridPosition) {
-    processed := map[GridPosition]bool{}
-    queue     := make([dynamic]GridPosition, 0)
-    matches   : [dynamic]Match
+on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
+    processed := map[i.GridPosition]bool{}
+    queue     := make([dynamic]i.GridPosition, 0)
+    matches   : [dynamic]b.Match
 
     rl.TraceLog(.DEBUG, "on_match: starting with %d positions", len(positions))
     for p in positions {
-        if is_valid(p) {
+        if b.is_valid(p) {
             rl.TraceLog(.DEBUG, "on_match: adding valid position (%d, %d) to queue", p.x, p.y)
             _ = append(&queue, p)
         } else {
@@ -139,8 +141,8 @@ on_match :: proc(b: ^Board, positions: []GridPosition) {
 
     for i in 0..<len(queue) {
         pos := queue[i]
-        if processed[pos] || !is_valid(pos) { 
-            if !is_valid(pos) {
+        if processed[pos] || !b.is_valid(pos) { 
+            if !b.is_valid(pos) {
                 rl.TraceLog(.ERROR, "on_match: skipping invalid position in queue (%d, %d)", pos.x, pos.y)
             }
             continue 
@@ -148,14 +150,14 @@ on_match :: proc(b: ^Board, positions: []GridPosition) {
         processed[pos] = true
         rl.TraceLog(.DEBUG, "on_match: processing position (%d, %d)", pos.x, pos.y)
 
-        local := find_matches_around(b, pos)
+        local := find_matches_around(board, pos)
         for m in local {
             append(&matches, m)
             for p in m.cells {
-                if !processed[p] && is_valid(p) {
+                if !processed[p] && b.is_valid(p) {
                     rl.TraceLog(.DEBUG, "on_match: adding match cell (%d, %d) to queue", p.x, p.y)
                     _ = append(&queue, p)
-                } else if !is_valid(p) {
+                } else if !b.is_valid(p) {
                     rl.TraceLog(.ERROR, "on_match: skipping invalid match cell (%d, %d)", p.x, p.y)
                 }
             }
@@ -163,16 +165,16 @@ on_match :: proc(b: ^Board, positions: []GridPosition) {
     }
 
     rl.TraceLog(.DEBUG, "on_match: found %d matches", len(matches))
-    apply_matches(b, matches[:])
+    apply_matches(board, matches[:])
 }
 
-apply_matches :: proc(b: ^Board, pats: []Match) {
+apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
     for pat in pats {
         for p in pat.cells {
-            if p.x >= 0 && p.x < GRID_WIDTH && p.y >= 0 && p.y < GRID_HEIGHT {
-                if b.slots[p.y][p.x] != .Black {
+            if p.x >= 0 && p.x < b.GRID_WIDTH && p.y >= 0 && p.y < b.GRID_HEIGHT {
+                if board.slots[p.y][p.x] != .Black {
                     rl.TraceLog(.DEBUG, "apply_matches: setting pos = (%d, %d) to Black", p.x, p.y)
-                    set_slot(b, p, .Black)
+                    b.set_slot(board, p, .Black)
                 }
             } else {
                 rl.TraceLog(.ERROR, "apply_matches: invalid pos = (%d, %d)", p.x, p.y)

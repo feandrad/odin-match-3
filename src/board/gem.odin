@@ -1,4 +1,4 @@
-package play
+package board
 
 GemType :: enum int {
     None = -1,

@@ -1,8 +1,10 @@
-package play
+package board
+
+import input "../input"
 
 Match :: struct {
     kind : MatchPattern,
-    cells: []GridPosition,
+    cells: []input.GridPosition,
 }
 
 MatchPattern :: enum {

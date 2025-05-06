@@ -1,16 +1,12 @@
-package play
+package board
 
 import c  "../common"
+import input "../input"
 import rl "vendor:raylib"
 
 GRID_WIDTH :: 6
 GRID_HEIGHT :: 8
 CELL_SIZE :: f32(64.0)
-
-GridPosition :: struct {
-    x: int,
-    y: int,
-}
 
 Board :: struct {
     slots  : [GRID_HEIGHT][GRID_WIDTH]GemType,
@@ -18,12 +14,12 @@ Board :: struct {
     start_y: f32,
 }
 
-is_valid :: proc(p: GridPosition) -> bool {
+is_valid :: proc(p: input.GridPosition) -> bool {
     return p.x >= 0 && p.x < GRID_WIDTH &&
     p.y >= 0 && p.y < GRID_HEIGHT
 }
 
-set_slot :: proc(b: ^Board, p: GridPosition, gem: GemType) {
+set_slot :: proc(b: ^Board, p: input.GridPosition, gem: GemType) {
     if is_valid(p) {
         b.slots[p.y][p.x] = gem
     } else {
@@ -60,37 +56,37 @@ init_board :: proc() -> Board {
     return b
 }
 
-is_in_bounds :: proc(p: GridPosition) -> bool {
+is_in_bounds :: proc(p: input.GridPosition) -> bool {
     return 0 <= p.x && p.x < GRID_WIDTH && 0 <= p.y && p.y < GRID_HEIGHT
 }
 
-grid_to_world :: proc(b: Board, p: GridPosition) -> rl.Vector2 {
+grid_to_world :: proc(b: Board, p: input.GridPosition) -> rl.Vector2 {
     return rl.Vector2{ b.start_x + f32(p.x) * CELL_SIZE, b.start_y + f32(p.y) * CELL_SIZE }
 }
 
-world_to_grid :: proc(b: Board, w: rl.Vector2) -> (GridPosition, bool) {
-    g := GridPosition{ int((w.x - b.start_x) / CELL_SIZE), int((w.y - b.start_y) / CELL_SIZE) }
+world_to_grid :: proc(b: Board, w: rl.Vector2) -> (input.GridPosition, bool) {
+    g := input.GridPosition{ int((w.x - b.start_x) / CELL_SIZE), int((w.y - b.start_y) / CELL_SIZE) }
     return g, is_in_bounds(g)
 }
 
-get_gem :: proc(b: Board, p: GridPosition) -> GemType {
+get_gem :: proc(b: Board, p: input.GridPosition) -> GemType {
     if !is_in_bounds(p) { return .None }
     return b.slots[p.y][p.x]
 }
 
-set_gem :: proc(b: ^Board, p: GridPosition, g: GemType) {
+set_gem :: proc(b: ^Board, p: input.GridPosition, g: GemType) {
     if is_in_bounds(p) {
         b.slots[p.y][p.x] = g
     }
 }
 
-are_adjacent :: proc(a, b: GridPosition) -> bool {
+are_adjacent :: proc(a, b: input.GridPosition) -> bool {
     dx := abs(a.x - b.x)
     dy := abs(a.y - b.y)
     return (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
 }
 
-get_slot :: proc(b: Board, p: GridPosition) -> GemType {
+get_slot :: proc(b: Board, p: input.GridPosition) -> GemType {
     if is_valid(p) {
         return b.slots[p.y][p.x]
     }
@@ -98,7 +94,7 @@ get_slot :: proc(b: Board, p: GridPosition) -> GemType {
     return .None
 }
 
-swap_slots :: proc(b: ^Board, a, b_: GridPosition) {
+swap_slots :: proc(b: ^Board, a, b_: input.GridPosition) {
     if is_valid(a) && is_valid(b_) {
         tmp := b.slots[a.y][a.x]
         b.slots[a.y][a.x] = b.slots[b_.y][b_.x]
@@ -109,7 +105,7 @@ swap_slots :: proc(b: ^Board, a, b_: GridPosition) {
     }
 }
 
-draw_board :: proc(b: Board, s: DragState) {
+draw_board :: proc(b: Board, s: input.DragState) {
     rl.DrawRectangle(i32(b.start_x), i32(b.start_y),
     i32(GRID_WIDTH * CELL_SIZE), i32(GRID_HEIGHT * CELL_SIZE),
     rl.DARKBROWN)
@@ -131,7 +127,7 @@ draw_board :: proc(b: Board, s: DragState) {
             if s.dragging && x == s.start_grid.x && y == s.start_grid.y { continue }
             g := b.slots[y][x]
             if g == .None { continue }
-            p := grid_to_world(b, GridPosition{ x, y })
+            p := grid_to_world(b, input.GridPosition{ x, y })
             rl.DrawRectangle(i32(p.x + padding), i32(p.y + padding),
             i32(CELL_SIZE - padding * 2), i32(CELL_SIZE - padding * 2),
             gem_color(g))
