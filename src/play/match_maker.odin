@@ -182,6 +182,9 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
 
     rl.TraceLog(.DEBUG, "on_match: found %d matches", len(matches))
     apply_matches(board, matches[:])
+
+    movements := handle_falls(board)
+    
 }
 
 apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
