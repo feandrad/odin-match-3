@@ -2,9 +2,9 @@ package common
 
 import rl "vendor:raylib"
 
-// Screen dimensions
-SCREEN_WIDTH :: 800
-SCREEN_HEIGHT :: 600
+// Screen dimensions - must match main.odin
+SCREEN_WIDTH :: #config(COMMON_SCREEN_WIDTH, 800)
+SCREEN_HEIGHT :: #config(COMMON_SCREEN_HEIGHT, 600)
 
 // Window title
 TITLE_C :: cstring("Game Menu in Odin + Raylib")
