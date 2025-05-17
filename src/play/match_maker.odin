@@ -3,6 +3,7 @@ package play
 import b "../board"
 import i "../input"
 import "core:slice"
+import str "core:strings"
 import rl "vendor:raylib"
 
 all_equal :: proc(board: b.Board, ps: []i.GridPosition, v: b.GemType) -> bool {
@@ -184,7 +185,7 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
     apply_matches(board, matches[:])
 
     movements := handle_falls(board)
-    
+
 }
 
 apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
@@ -203,9 +204,14 @@ apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
                 }
 
                 board.slots[p.y][p.x] = replace_with
-                rl.TraceLog(.DEBUG,
-                "apply_matches: setting pos = (%d, %d) to %v (was %v)",
-                p.x, p.y, replace_with, current)
+
+                rl.TraceLog(
+                    .DEBUG,
+                    "apply_matches: setting pos = (%d, %d) to %s (was %s)",
+                    p.x, p.y,
+                    str.clone_to_cstring(b.gem_to_string(replace_with), context.temp_allocator),
+                    str.clone_to_cstring(b.gem_to_string(current), context.temp_allocator),
+                )
             } else {
                 rl.TraceLog(.ERROR, "apply_matches: invalid pos = (%d, %d)", p.x, p.y)
             }

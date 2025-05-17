@@ -7,9 +7,17 @@ import rl "vendor:raylib"
 GAME_TITLE :: cstring("MATCH‑3 GAME")
 INSTRUCTIONS_C :: cstring("Drag gems to swap them")
 
+GamePhase :: enum {
+    Idle,
+    AnimatingFall,
+}
+
 GameData :: struct {
     board      : b.Board,
     drag_state : i.DragState,
+    phase      : GamePhase,
+    movements  : [dynamic]GemMovement,
+    timer      : f32,
 }
 
 game : GameData
@@ -23,6 +31,9 @@ Init :: proc() {
     game = GameData{
         board      = b.init_board(),
         drag_state = init_drag_state(),
+        phase      = .Idle,
+        movements  = make([dynamic]GemMovement, 0),
+        timer      = 0.0,
     }
 }
 
@@ -30,7 +41,15 @@ Update :: proc() -> bool {
     if rl.IsKeyPressed(.ESCAPE) {
         return true
     }
-    update_drag(&game.board, &game.drag_state, on_gem_swap)
+
+    switch game.phase {
+    case .Idle:
+        update_drag(&game.board, &game.drag_state, on_gem_swap)
+
+    case .AnimatingFall:
+//        update_fall_animation(&game, rl.GetFrameTime())
+    }
+
     return false
 }
 
