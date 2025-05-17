@@ -8,7 +8,7 @@ import rl "vendor:raylib"
 
 all_equal :: proc(board: b.Board, ps: []i.GridPosition, v: b.GemType) -> bool {
     for p in ps {
-        if board.slots[p.y][p.x] != v {
+        if board.slots[p.y][p.x].gem != v {
             return false
         }
     }
@@ -34,7 +34,7 @@ find_matches_around :: proc(board: ^b.Board, pos: i.GridPosition) -> [dynamic]b.
     }
 
     out : [dynamic]b.Match
-    centre := board.slots[pos.y][pos.x]
+    centre := board.slots[pos.y][pos.x].gem
     if centre == .None {
         return out
     }
@@ -43,14 +43,14 @@ find_matches_around :: proc(board: ^b.Board, pos: i.GridPosition) -> [dynamic]b.
     horiz : [dynamic]i.GridPosition
     push_pos(&horiz, pos)
     for x := pos.x - 1; x >= 0; x -= 1 {
-        if board.slots[pos.y][x] == centre {
+        if board.slots[pos.y][x].gem == centre {
             push_pos(&horiz, i.GridPosition{ x, pos.y })
         } else {
             break
         }
     }
     for x in pos.x + 1 ..< b.GRID_WIDTH {
-        if board.slots[pos.y][x] == centre {
+        if board.slots[pos.y][x].gem == centre {
             push_pos(&horiz, i.GridPosition{ x, pos.y })
         } else {
             break
@@ -71,14 +71,14 @@ find_matches_around :: proc(board: ^b.Board, pos: i.GridPosition) -> [dynamic]b.
     vert : [dynamic]i.GridPosition
     push_pos(&vert, pos)
     for y := pos.y - 1; y >= 0; y -= 1 {
-        if board.slots[y][pos.x] == centre {
+        if board.slots[y][pos.x].gem == centre {
             push_pos(&vert, i.GridPosition{ pos.x, y })
         } else {
             break
         }
     }
     for y in pos.y + 1 ..< b.GRID_HEIGHT {
-        if board.slots[y][pos.x] == centre {
+        if board.slots[y][pos.x].gem == centre {
             push_pos(&vert, i.GridPosition{ pos.x, y })
         } else {
             break
@@ -192,7 +192,7 @@ apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
     for pat in pats {
         for p in pat.cells {
             if p.x >= 0 && p.x < b.GRID_WIDTH && p.y >= 0 && p.y < b.GRID_HEIGHT {
-                current := board.slots[p.y][p.x]
+                current := board.slots[p.y][p.x].gem
                 if current == .None {
                     continue
                 }
@@ -203,7 +203,7 @@ apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
                     replace_with = b.GemType.None
                 }
 
-                board.slots[p.y][p.x] = replace_with
+                board.slots[p.y][p.x].gem = replace_with
 
                 rl.TraceLog(
                     .DEBUG,

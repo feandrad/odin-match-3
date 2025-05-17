@@ -16,7 +16,7 @@ detect_column_fall :: proc(board: ^b.Board, col: int) -> [dynamic]GemMovement {
     empty_slots := 0
 
     for row := (b.GRID_HEIGHT - 1) ; row >= 0 ; row -= 1 {
-        gem := board.slots[row][col]
+        gem := board.slots[row][col].gem
         if gem == .None {
             empty_slots += 1
             rl.TraceLog(.DEBUG, "Column %d, row %d is empty. Empty count: %d", col, row, empty_slots)
@@ -26,11 +26,10 @@ detect_column_fall :: proc(board: ^b.Board, col: int) -> [dynamic]GemMovement {
             rl.TraceLog(.DEBUG, "Gem %v at (%d, %d) will fall to (%d, %d)", gem, from.x, from.y, to.x, to.y)
 
             append(&movements, GemMovement{ from, to, gem })
-            board.slots[to.y][to.x] = gem
-            board.slots[row][col] = .None
+            b.mark_slot_to_move(board, to.y,to.x)
+            b.mark_slot_to_move(board, row, col)
 
-            rl.TraceLog(.DEBUG, "Moved gem %v to slot[%d][%d]", gem, to.y, to.x)
-            rl.TraceLog(.DEBUG, "Cleared original position slot[%d][%d]", row, col)
+            rl.TraceLog(.DEBUG, "Marked gem %v to move to slot[%d][%d]", gem, to.y, to.x)
         }
     }
 
