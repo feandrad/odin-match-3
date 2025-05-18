@@ -193,17 +193,22 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
 
 apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
     for pat in pats {
-        for p in pat.cells {
+        for p, i in pat.cells {
             if p.x >= 0 && p.x < b.GRID_WIDTH && p.y >= 0 && p.y < b.GRID_HEIGHT {
                 current := board.slots[p.y][p.x].gem
                 if current == .None {
                     continue
                 }
 
-                replace_with := b.GemType.Black
+                replace_with := b.GemType.None
 
-                if pat.kind == .Horizontal3 || pat.kind == .Vertical3 {
-                    replace_with = b.GemType.None
+                // Create powerups for matches larger than 3
+                if pat.kind == .Horizontal4 || pat.kind == .Horizontal5 ||
+                   pat.kind == .Vertical4 || pat.kind == .Vertical5 {
+                    // The first gem in the pattern becomes a powerup
+                    if i == 0 {
+                        replace_with = b.GemType.White
+                    }
                 }
 
                 board.slots[p.y][p.x].gem = replace_with
