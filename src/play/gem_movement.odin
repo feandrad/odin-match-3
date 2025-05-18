@@ -28,13 +28,10 @@ detect_column_fall :: proc(board: ^b.Board, col: int) -> [dynamic]GemMovement {
             rl.TraceLog(.DEBUG, "Gem %v at (%d, %d) will fall to (%d, %d). Current world pos: %v",
                 gem, from.x, from.y, to.x, to.y, world_pos)
 
-            // Clear the source position and mark it as moving
-            board.slots[row][col].gem = .None
+            // Mark both positions as moving and clear the source position
             board.slots[row][col].moving = true
-
-            // Set the destination position (it will be empty until the gem arrives)
-            board.slots[to.y][to.x].gem = gem
-            board.slots[to.y][to.x].moving = false
+            board.slots[to.y][to.x].moving = true
+            board.slots[row][col].gem = .None
 
             append(&movements, GemMovement{ from, to, gem, world_pos })
             rl.TraceLog(.DEBUG, "Marked gem %v to move to slot[%d][%d]", gem, to.y, to.x)

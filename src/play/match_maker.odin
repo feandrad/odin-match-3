@@ -185,6 +185,10 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
     apply_matches(board, matches[:])
 
     movements := handle_falls(board)
+    if len(movements) > 0 {
+        game.movements = movements
+        game.phase = .AnimatingFall
+    }
 }
 
 apply_matches :: proc(board: ^b.Board, pats: []b.Match) {

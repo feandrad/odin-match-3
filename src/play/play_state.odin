@@ -57,14 +57,16 @@ Draw :: proc() {
     rl.ClearBackground(rl.DARKBLUE)
     //    c.draw_centered_text(GAME_TITLE, 30, 30, c.COLOR_TEXT)
     b.draw_board(game.board, game.drag_state)
-    draw_falling_gems(game.board, game.movements[:])
+    if game.phase == .AnimatingFall {
+        draw_falling_gems(game.board, game.movements[:])
+    }
     draw_drag(game.board, game.drag_state)
 //    c.draw_centered_text(INSTRUCTIONS_C, c.SCREEN_HEIGHT-80, 20, c.COLOR_TEXT)
 //    c.draw_centered_text(c.HELP_ESC_C,   c.SCREEN_HEIGHT-40, 20, c.COLOR_TEXT_HELP)
 }
 
 update_fall_animation :: proc(game: ^GameData, delta: f32) {
-    speed := f32(400.0) // pixels por segundo
+    speed := f32(400.0) // pixels per second
     still_moving := false
 
     for i in 0 ..< len(game.movements) {
@@ -87,6 +89,9 @@ update_fall_animation :: proc(game: ^GameData, delta: f32) {
         }
     }
 
+    // Collect positions to check for matches
+    positions_to_check: [dynamic]i.GridPosition
+
     // Remove gems that have arrived
     new_movements: [dynamic]GemMovement
     for m in game.movements {
@@ -97,13 +102,19 @@ update_fall_animation :: proc(game: ^GameData, delta: f32) {
             game.board.slots[m.from.y][m.from.x].moving = false
             game.board.slots[m.to.y][m.to.x].gem = m.gem
             game.board.slots[m.to.y][m.to.x].moving = false
+            _ = append(&positions_to_check, m.to)
         }
     }
 
     game.movements = new_movements
 
     if len(game.movements) == 0 {
-        game.phase = .Idle
+        // Check for new matches in the final positions
+        if len(positions_to_check) > 0 {
+            on_match(&game.board, positions_to_check[:])
+        } else {
+            game.phase = .Idle
+        }
     }
 }
 
