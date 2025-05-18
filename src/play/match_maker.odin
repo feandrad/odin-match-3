@@ -185,7 +185,6 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
     apply_matches(board, matches[:])
 
     movements := handle_falls(board)
-
 }
 
 apply_matches :: proc(board: ^b.Board, pats: []b.Match) {

@@ -136,7 +136,7 @@ draw_board :: proc(board: Board, drag: input.DragState) {
             if drag.dragging && x == drag.start_grid.x && y == drag.start_grid.y { continue }
 
             slot := get_slot(board, input.GridPosition{ x, y })
-            if slot.gem == .None || slot.moving { continue }
+            if static_draw_condition(slot) { continue }
 
             p := grid_to_world(board, input.GridPosition{ x, y })
 
@@ -145,4 +145,8 @@ draw_board :: proc(board: Board, drag: input.DragState) {
             gem_color(slot.gem))
         }
     }
+}
+
+static_draw_condition :: proc(slot: Slot) -> bool {
+    return slot.gem == .None || slot.moving
 }
