@@ -2,6 +2,8 @@ package play
 
 import b "../board"
 import i "../input"
+import "core:fmt"
+import str "core:strings"
 import rl "vendor:raylib"
 
 GAME_TITLE :: cstring("MATCH‑3 GAME")
@@ -18,12 +20,17 @@ GameData :: struct {
     phase      : GamePhase,
     movements  : [dynamic]GemMovement,
     timer      : f32,
+    score      : int,
+    cascade_count: int,
+    gems_destroyed: int,
 }
 
 game : GameData
 
 on_gem_swap :: proc(a, b: i.GridPosition) {
-    on_match(&game.board, []i.GridPosition{a, b})
+    game.cascade_count = 0
+    game.gems_destroyed = 0
+    on_match(&game.board, []i.GridPosition{a, b}, true)
 }
 
 Init :: proc() {
@@ -34,6 +41,9 @@ Init :: proc() {
         phase      = .Idle,
         movements  = make([dynamic]GemMovement, 0),
         timer      = 0.0,
+        score      = 0,
+        cascade_count = 0,
+        gems_destroyed = 0,
     }
 }
 
@@ -55,14 +65,15 @@ Update :: proc() -> bool {
 
 Draw :: proc() {
     rl.ClearBackground(rl.DARKBLUE)
-    //    c.draw_centered_text(GAME_TITLE, 30, 30, c.COLOR_TEXT)
     b.draw_board(game.board, game.drag_state)
     if game.phase == .AnimatingFall {
         draw_falling_gems(game.board, game.movements[:])
     }
     draw_drag(game.board, game.drag_state)
-//    c.draw_centered_text(INSTRUCTIONS_C, c.SCREEN_HEIGHT-80, 20, c.COLOR_TEXT)
-//    c.draw_centered_text(c.HELP_ESC_C,   c.SCREEN_HEIGHT-40, 20, c.COLOR_TEXT_HELP)
+
+    // Draw score
+    score_text := fmt.tprintf("Score: %d", game.score)
+    rl.DrawText(str.clone_to_cstring(score_text, context.temp_allocator), 10, 10, 20, rl.WHITE)
 }
 
 update_fall_animation :: proc(game: ^GameData, delta: f32) {
@@ -111,8 +122,14 @@ update_fall_animation :: proc(game: ^GameData, delta: f32) {
     if len(game.movements) == 0 {
         // Check for new matches in the final positions
         if len(positions_to_check) > 0 {
-            on_match(&game.board, positions_to_check[:])
+            on_match(&game.board, positions_to_check[:], false)
         } else {
+            // Apply final score calculation at the end of cascade
+            if game.cascade_count > 0 {
+                game.score += game.gems_destroyed * game.cascade_count
+                game.cascade_count = 0
+                game.gems_destroyed = 0
+            }
             game.phase = .Idle
         }
     }

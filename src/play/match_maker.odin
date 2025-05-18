@@ -141,7 +141,7 @@ find_matches_around :: proc(board: ^b.Board, pos: i.GridPosition) -> [dynamic]b.
     return out
 }
 
-on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
+on_match :: proc(board: ^b.Board, positions: []i.GridPosition, is_user_move: bool) {
     processed := map[i.GridPosition]bool{ }
     queue := make([dynamic]i.GridPosition, 0)
     matches   : [dynamic]b.Match
@@ -182,7 +182,7 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
     }
 
     rl.TraceLog(.DEBUG, "on_match: found %d matches", len(matches))
-    apply_matches(board, matches[:])
+    apply_matches(board, matches[:], is_user_move)
 
     movements := handle_falls(board)
     if len(movements) > 0 {
@@ -191,7 +191,11 @@ on_match :: proc(board: ^b.Board, positions: []i.GridPosition) {
     }
 }
 
-apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
+apply_matches :: proc(board: ^b.Board, pats: []b.Match, is_user_move: bool) {
+    if len(pats) > 0 {
+        game.cascade_count += 1
+    }
+
     for pat in pats {
         for p, i in pat.cells {
             if p.x >= 0 && p.x < b.GRID_WIDTH && p.y >= 0 && p.y < b.GRID_HEIGHT {
@@ -212,17 +216,27 @@ apply_matches :: proc(board: ^b.Board, pats: []b.Match) {
                 }
 
                 board.slots[p.y][p.x].gem = replace_with
+                game.gems_destroyed += 1
 
                 rl.TraceLog(
                     .DEBUG,
-                    "apply_matches: setting pos = (%d, %d) to %s (was %s)",
+                    "apply_matches: setting pos = (%d, %d) to %s (was %s), cascade: %d, gems: %d",
                     p.x, p.y,
                     str.clone_to_cstring(b.gem_to_string(replace_with), context.temp_allocator),
                     str.clone_to_cstring(b.gem_to_string(current), context.temp_allocator),
+                    game.cascade_count,
+                    game.gems_destroyed,
                 )
             } else {
                 rl.TraceLog(.ERROR, "apply_matches: invalid pos = (%d, %d)", p.x, p.y)
             }
         }
+    }
+
+    // If this is the last match in the cascade (no more movements), update score immediately
+    if len(pats) > 0 && game.phase == .Idle {
+        game.score += game.gems_destroyed * game.cascade_count
+        game.cascade_count = 0
+        game.gems_destroyed = 0
     }
 }
